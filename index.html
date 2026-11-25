@@ -124,11 +124,9 @@ function markerIcon(kind,zoom){
  }
  return L.divIcon({className:'category-marker',html:'<div class="v7-symbol '+kind+'"><span>'+spec.emoji+'</span></div>',iconSize:[40,42],iconAnchor:[20,36],popupAnchor:[0,-34]});
 }
-const markers=L.markerClusterGroup({
- showCoverageOnHover:false, spiderfyOnMaxZoom:true, disableClusteringAtZoom:14,
- maxClusterRadius:48, animate:true, chunkedLoading:true,
- iconCreateFunction:function(cluster){const n=cluster.getChildCount();return L.divIcon({html:'<div class="v7-cluster" style="width:42px;height:42px">'+n+'</div>',className:'',iconSize:[42,42]});}
-});
+// V7.2: show each destination's own category mascot/symbol at every map extent.
+ // Do not aggregate places into numbered cluster circles on the initial map.
+ const markers=L.layerGroup();
 const markerByPlace=new Map();
 const placeMarkers=[];
 PLACES.forEach((p,index)=>{
@@ -136,7 +134,10 @@ PLACES.forEach((p,index)=>{
  const marker=L.marker([p.latitude,p.longitude],{icon:markerIcon(kind,map.getZoom()),title:p.name,alt:p.name});
  const destinationUrl='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(p.latitude+','+p.longitude)+'&travelmode=driving';
  marker.bindPopup('<div class="place-popup"><b>'+esc(p.name)+'</b><br>ประเภท: '+esc(p.category||'ไม่ระบุ')+'<br>หมวดแผนที่: '+esc(categoryStyles[kind].label)+(p.address&&p.address!=='-'?'<br>ที่อยู่: '+esc(p.address):'')+(p.description?'<br><br>'+esc(String(p.description).replace(/<[^>]*>/g,' ').slice(0,420)):'')+'<br><a class="nav-action" href="'+destinationUrl+'" target="_blank" rel="noopener noreferrer">➤ นำทางจากตำแหน่งปัจจุบันด้วย Google Maps</a><br><small style="color:#718178">Google Maps จะเปิดเส้นทางขับรถไปยังพิกัดของสถานที่นี้</small></div>');
- marker.bindTooltip(esc(p.name),{permanent:true,direction:'top',offset:[0,-35],className:'place-name-label'});
+ marker.bindTooltip(esc(p.name),{permanent:true,direction:'right',offset:[30,-20],className:'place-name-label'});
+ // Keep the place label beside the marker, never on top of the mascot.
+ marker.on('add',function(){const tip=marker.getTooltip();if(tip){tip.options.direction='right';tip.options.offset=map.getZoom()>=14?L.point(48,-42):L.point(30,-18);}});
+ marker.on('tooltipopen',function(){const tip=marker.getTooltip();if(tip){tip.options.direction='right';tip.options.offset=map.getZoom()>=14?L.point(48,-42):L.point(30,-18);}});
  markerByPlace.set(p.name,{marker,place:p,kind});
  placeMarkers.push({marker,kind});
  markers.addLayer(marker);
@@ -148,7 +149,11 @@ function updateAdaptiveMarkers(){
    marker.setIcon(markerIcon(kind,z));
    const tip=marker.getTooltip();
    if(!tip)return;
-   if(z>=12)marker.openTooltip(); else marker.closeTooltip();
+   if(z>=12){
+     const tip=marker.getTooltip();
+     if(tip){tip.options.direction='right';tip.options.offset=z>=14?L.point(48,-42):L.point(30,-18);}
+     marker.openTooltip();
+   } else marker.closeTooltip();
  });
 }
 map.on('zoomend',updateAdaptiveMarkers);updateAdaptiveMarkers();
