@@ -1,0 +1,70 @@
+
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SUNSIAMMALL - Map Review 33 Places</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f4f7f3;color:#20312a}
+header{background:#102b24;color:white;padding:18px}
+h2{margin:0 0 8px}
+main{padding:16px;max-width:1100px;margin:auto}
+#map{height:65vh;min-height:420px;border-radius:12px;border:1px solid #ccc}
+.panel{background:white;padding:14px;border-radius:12px;margin-bottom:14px}
+button{background:#176b4a;color:white;border:0;padding:10px 16px;border-radius:8px}
+#status{white-space:pre-wrap;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+<h2>SUNSIAMMALL GREEN TOURISM</h2>
+ตรวจสอบตำแหน่งสถานที่ท่องเที่ยวสวนผึ้ง 33 จุด
+</header>
+<main>
+<div class="panel">
+<p>เลือกไฟล์ tourism_sp_33_firestore_draft.json จากเครื่องแม่</p>
+<input type="file" id="file" accept=".json,application/json">
+<div id="status">รอเลือกไฟล์ข้อมูล</div>
+</div>
+<div id="map"></div>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map=L.map('map').setView([13.55,99.32],11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+ maxZoom:19,
+ attribution:'© OpenStreetMap'
+}).addTo(map);
+
+document.getElementById('file').addEventListener('change',async e=>{
+ const file=e.target.files[0];
+ if(!file)return;
+ try{
+  const records=JSON.parse(await file.text());
+  if(!Array.isArray(records))throw Error('รูปแบบไฟล์ไม่ถูกต้อง');
+  if(records.length!==33)throw Error('พบ '+records.length+' จุด ไม่ใช่ 33 จุด');
+  const bounds=[];
+  records.forEach((r,i)=>{
+   const lat=Number(r.latitude),lng=Number(r.longitude);
+   if(!r.name||!Number.isFinite(lat)||!Number.isFinite(lng))return;
+   const marker=L.marker([lat,lng]).addTo(map);
+   marker.bindPopup('<b>'+(i+1)+'. '+r.name+'</b><br>'+
+    (r.category||'')+'<br>'+
+    (r.address||'')+
+    '<br>พิกัด: '+lat+', '+lng);
+   bounds.push([lat,lng]);
+  });
+  if(bounds.length)map.fitBounds(bounds,{padding:[25,25]});
+  document.getElementById('status').textContent=
+   'อ่านข้อมูล '+records.length+' รายการแล้ว\n'+
+   'แสดงจุดบนแผนที่ '+bounds.length+' จุด\n'+
+   'โปรดตรวจตำแหน่งจริงก่อนเผยแพร่';
+ }catch(err){
+  document.getElementById('status').textContent='เกิดข้อผิดพลาด: '+err.message;
+ }
+});
+</script>
+</body>
+</html>
