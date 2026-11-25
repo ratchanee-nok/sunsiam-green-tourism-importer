@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SUNSIAMMALL GREEN TOURISM — Mascot Map Preview</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--navy:#102b24;--green:#176b4a;--gold:#c7a45b;--bg:#f4f7f3;--ink:#20312a}
+*{box-sizing:border-box}body{font-family:Arial,"Noto Sans Thai",sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(115deg,var(--navy),var(--green));color:white;padding:20px}
+header h1{font-size:22px;margin:0 0 6px}header p{margin:0;color:#e5efe8}
+main{padding:16px;max-width:1200px;margin:auto}.panel{background:white;padding:15px;border-radius:13px;margin-bottom:14px;box-shadow:0 2px 10px #173b2810}
+#map{height:68vh;min-height:440px;border-radius:13px;border:1px solid #cbd8cf;z-index:1}
+input[type=file]{max-width:100%;margin:6px 0 10px}
+#status{white-space:pre-wrap;line-height:1.65;margin-top:8px}
+.legend{display:flex;gap:10px 18px;flex-wrap:wrap;margin-top:10px}
+.legend span{display:flex;align-items:center;gap:6px;font-size:14px}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #888}
+.note{background:#fff8e8;border-left:4px solid var(--gold);padding:10px 12px;border-radius:7px;font-size:14px}
+.leaflet-popup-content{line-height:1.6}
+@media(max-width:600px){#map{height:65vh;min-height:380px}header h1{font-size:19px}}
+</style>
+</head>
+<body>
+<header>
+<h1>SUNSIAMMALL GREEN TOURISM</h1>
+<p>Mascot Map Preview — ทดลองสัญลักษณ์สถานที่ท่องเที่ยว 33 จุด</p>
+</header>
+<main>
+<section class="panel">
+<b>เลือกไฟล์ข้อมูล tourism_sp_33_firestore_draft.json</b><br>
+<input type="file" id="file" accept=".json,application/json">
+<div id="status">รอเลือกไฟล์ข้อมูล 33 จุด</div>
+<div class="note">หน้านี้เป็น Preview เท่านั้น ใช้ข้อมูลจากไฟล์ JSON ที่เลือกในเครื่อง ไม่แก้ไข Firestore และไม่เปลี่ยนพิกัดต้นฉบับ การจับคู่ประเภทใช้คำสำคัญจาก category และ subcategory หากไม่ตรงหมวดจะใช้ไอคอนธรรมชาติเป็นค่าเริ่มต้น</div>
+<div class="legend">
+<span>🌿 ธรรมชาติ</span><span>🏔️ ผจญภัย</span><span>🛕 วัฒนธรรม</span>
+<span>🏡 ที่พัก</span><span>🛍️ ตลาด</span><span>🏘️ ชุมชน</span>
+</div>
+</section>
+<div id="map"></div>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map=L.map('map').setView([13.55,99.32],11);
+L.tileLayer('https://tile.openfreemap.org/styles/liberty/{z}/{x}/{y}.png',{
+ maxZoom:19,attribution:'© OpenFreeMap © OpenStreetMap'
+}).addTo(map);
+
+const types={
+ nature:{file:'01_nature.png',label:'ธรรมชาติ / ป่าไม้'},
+ adventure:{file:'02_adventure.png',label:'ผจญภัย / กิจกรรม'},
+ culture:{file:'03_culture.png',label:'วัด / วัฒนธรรม'},
+ accommodation:{file:'04_accommodation.png',label:'ที่พัก / รีสอร์ต'},
+ market:{file:'05_market.png',label:'ตลาด / สินค้าท้องถิ่น'},
+ community:{file:'06_community.png',label:'ชุมชน / วิถีชีวิต'}
+};
+function classify(r){
+ const s=[r.category,r.subcategory,r.activityCategory,r.name,r.description].filter(Boolean).join(' ').toLowerCase();
+ if(/ที่พัก|รีสอร์ท|โรงแรม|โฮมสเตย์|accommodation|resort|hotel|homestay/.test(s))return 'accommodation';
+ if(/ตลาด|ของฝาก|สินค้า.?ท้องถิ่น|ตลาดนัด|market|souvenir/.test(s))return 'market';
+ if(/ชุมชน|หมู่บ้าน|วิถีชีวิต|otop|community|village|local life/.test(s))return 'community';
+ if(/วัด|โบราณ|ประวัติศาสตร์|วัฒนธรรม|ศาสนา|temple|culture|heritage|historical/.test(s))return 'culture';
+ if(/ผจญภัย|กิจกรรม|เดินป่า|ปีน|ขี่ม้า|ล่องแก่ง|adventure|activity|trek|hiking|rafting/.test(s))return 'adventure';
+ return 'nature';
+}
+function makeIcon(key){
+ return L.icon({iconUrl:'types[key].file,iconSize:[58,66],iconAnchor:[29,64],popupAnchor:[0,-60]});
+}
+let markers=[];
+document.getElementById('file').addEventListener('change',async e=>{
+ const f=e.target.files[0];if(!f)return;
+ markers.forEach(m=>map.removeLayer(m));markers=[];
+ try{
+  const records=JSON.parse(await f.text());
+  if(!Array.isArray(records))throw Error('รูปแบบ JSON ต้องเป็น Array');
+  if(records.length!==33)throw Error('พบ '+records.length+' รายการ ไม่ใช่ 33 รายการ');
+  const bounds=[],counts={nature:0,adventure:0,culture:0,accommodation:0,market:0,community:0};
+  records.forEach((r,i)=>{
+   const lat=Number(r.latitude),lng=Number(r.longitude);
+   if(!r.name||!Number.isFinite(lat)||!Number.isFinite(lng))return;
+   const key=classify(r);counts[key]++;
+   const marker=L.marker([lat,lng],{icon:makeIcon(key)}).addTo(map);
+   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+   marker.bindPopup('<b>'+(i+1)+'. '+esc(r.name)+'</b><br>'+esc(types[key].label)+
+     (r.category?'<br>หมวดข้อมูล: '+esc(r.category):'')+
+     (r.subcategory?'<br>หมวดย่อย: '+esc(r.subcategory):'')+
+     (r.address?'<br>'+esc(r.address):'')+
+     '<br><small>พิกัด: '+lat.toFixed(6)+', '+lng.toFixed(6)+'</small>');
+   markers.push(marker);bounds.push([lat,lng]);
+  });
+  if(bounds.length)map.fitBounds(bounds,{padding:[35,35]});
+  document.getElementById('status').textContent=
+   'อ่านข้อมูล '+records.length+' รายการแล้ว\\nแสดงตำแหน่ง '+bounds.length+' จุด\\n'+
+   'ธรรมชาติ '+counts.nature+' | ผจญภัย '+counts.adventure+' | วัฒนธรรม '+counts.culture+
+   '\\nที่พัก '+counts.accommodation+' | ตลาด '+counts.market+' | ชุมชน '+counts.community+
+   '\\n\\nโปรดตรวจสอบการจับคู่หมวดหมู่และตำแหน่งก่อนเผยแพร่';
+ }catch(err){document.getElementById('status').textContent='เกิดข้อผิดพลาด: '+err.message;}
+});
+</script>
+</body></html>
