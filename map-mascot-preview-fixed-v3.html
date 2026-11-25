@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SUNSIAMMALL GREEN TOURISM — Mascot Map V3</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--navy:#102b24;--green:#176b4a;--gold:#c7a45b;--bg:#f4f7f3;--ink:#20312a}
+*{box-sizing:border-box}body{font-family:Arial,"Noto Sans Thai",sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(115deg,var(--navy),var(--green));color:white;padding:20px}
+header h1{font-size:22px;margin:0 0 6px}header p{margin:0;color:#e5efe8}
+main{padding:16px;max-width:1200px;margin:auto}.panel{background:white;padding:15px;border-radius:13px;margin-bottom:14px;box-shadow:0 2px 10px #173b2810}
+#map{height:68vh;min-height:440px;border-radius:13px;border:1px solid #cbd8cf;background:#e7eee8;z-index:1}
+#status{white-space:pre-wrap;line-height:1.65;margin-top:8px}
+.legend{display:flex;gap:10px 18px;flex-wrap:wrap;margin-top:10px}
+.legend span{display:flex;align-items:center;gap:6px;font-size:14px}
+.note{background:#fff8e8;border-left:4px solid var(--gold);padding:10px 12px;border-radius:7px;font-size:14px}
+.leaflet-popup-content{line-height:1.6}
+.mascot-marker{background:transparent;border:0}
+.mascot-marker img{width:54px;height:62px;object-fit:contain;filter:drop-shadow(0 2px 2px #0004)}
+@media(max-width:600px){#map{height:65vh;min-height:380px}header h1{font-size:19px}}
+</style>
+</head>
+<body>
+<header>
+<h1>SUNSIAMMALL GREEN TOURISM</h1>
+<p>Mascot Map — แผนที่สถานที่ท่องเที่ยวสวนผึ้ง 33 จุด</p>
+</header>
+<main>
+<section class="panel">
+<b>แผนที่ตัวอย่างจากข้อมูล 33 จุด</b>
+<div id="status">กำลังเริ่มต้นแผนที่และโหลดข้อมูลสถานที่…</div>
+<div class="note">หน้านี้โหลดข้อมูลสถานที่จากไฟล์ที่เผยแพร่พร้อมหน้าเว็บโดยอัตโนมัติ ไม่ต้องเลือกไฟล์จากเครื่องผู้ใช้ และไม่เขียนข้อมูลลง Firestore ข้อมูลทั้ง 33 จุดยังเป็นฉบับร่างเพื่อการตรวจสอบพิกัดและประเภทก่อนเผยแพร่</div>
+<div class="legend">
+<span>🌿 ธรรมชาติ</span><span>🏔️ ผจญภัย</span><span>🛕 วัฒนธรรม</span>
+<span>🏡 ที่พัก</span><span>🛍️ ตลาด</span><span>🏘️ ชุมชน</span>
+</div>
+</section>
+<div id="map" role="application" aria-label="แผนที่สถานที่ท่องเที่ยวสวนผึ้ง"></div>
+</main>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const PLACES = [{"name":"ตลาดโอ๊ะป่อย หมู่บ้านท่องเที่ยว OTOP นวัตวิถีบ้านท่ามะขาม","category":"แหล่งท่องเที่ยวทางประวัติศาสตร์ และวัฒนธรรม","subcategory":"วิถีชีวิตความเป็นอยู่ (ชุมชน)","activityCategory":"นันทนาการ และการท่องเที่ยว","description":"ตลาดเช้าชาวกะเหรี่ยง “โอ๊ะป่อย” ตลาดแห่งนี้ตั้งอยู่ริมสายน้ำลำภาชี บนพื้นที่วัดป่าท่","address":"163 หมู่ 2","latitude":13.52054589,"longitude":99.31537909},{"name":"นิดา การ์เด้น","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"จุดชมวิว","activityCategory":"","description":"ทุ่งดอกเก๊กฮวยเหลืองอร่าม เหมาะแก่การชมวิวดอกไม้สวยๆ ชมธรรมชาติ และถ่ายรูป โดย<span style=\"background-colo","address":"-","latitude":13.5695218,"longitude":99.4421226},{"name":"ตลาดทุ่งเจดีย์ สวนผึ้ง ราชบุรี","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"จุดชมวิว","activityCategory":"","description":"ตลาดทุ่งเจดีย์ เป็นจุดแวะพักอีกแห่งที่น่าสนใจ บรรยากาศเป็นส่วนตัว เงียบสงบ เหมาะแก่การพ","address":"-","latitude":13.5897778,"longitude":99.2350902},{"name":"พสุธารา","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ไร่/สวนเกษตร (ฟาร์มสัตว์/ประมง)","activityCategory":"","description":"พสุธาราจำหน่ายทั้งผลิตผลปลอดภัยที่ได้ภายในฟาร์มได้แก่ ผักเคล เลมอนและสมุนไพรเมืองหนาว","address":"317","latitude":13.5168016,"longitude":99.3469656},{"name":"ไร่องุ่นมีสุข","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"ทุ่งดอกไม้และพืชพันธุ์","activityCategory":"","description":"ชมไร่องุ่น สวนดอกไม้ เลือกซื้อผลิตภัณฑ์จากองุ่นและอื่นๆ","address":"295","latitude":13.540053,"longitude":99.2975537},{"name":"สวนผึ้งไฮแลนด์","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"สวนสาธารณะ/สวนหย่อม","activityCategory":"","description":"สถานที่ท่องเที่ยวที่ตั้งอยู่บนเนินเขาคล้ายเขาหนึ่งลูก ให้เราได้เดินผ่านขี้นไปตั้งแต่ต","address":"352 ม.2","latitude":13.5448476,"longitude":99.3167018},{"name":"โคโรฟิลด์","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ไร่/สวนเกษตร (ฟาร์มสัตว์/ประมง)","activityCategory":"","description":"Coro Field อ.สวนผึ้ง จ.ราชบุรี สถานที่ท่องเที่ยวเชิงเกษตรไลฟ์สไตล์แห่งแรกในประเทศไทย “โคโร่” (Coro)","address":"117","latitude":13.5444046,"longitude":99.4239191},{"name":"เดอะ รีสอร์ท วอเทอร์ พาร์ค","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"สวนสนุก/สวนน้ำ","activityCategory":"","description":"สวนน้ำแห่งแรก แห่งเดียวในสวนผึ้งโอบล้อมด้วยภูเขาบนพื้นที่ที่รายล้อมไปด้วยธรรมชาติ และบ","address":"555","latitude":13.7003841,"longitude":99.1984704},{"name":"ศูนย์การเรียนรู้เฌอซี๊ญ่า และตลาดไกวเปล","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ห้างสรรพสินค้า/แหล่งช้อปปิ้ง/ตลาดสด/ตลาดนัด/ถนนคนเดิน","activityCategory":"","description":"“เฌอซี๊ญ่า” ภาษากะเหรี่ยงแปลว่า “การเรียนรู้วิถีชีวิตชุมชน” ซึ่งเป็นชื่อของ “ศูนย์การเร","address":"","latitude":13.5119835,"longitude":99.3081209},{"name":"ตลาดโอ๊ะป่อย","category":"แหล่งท่องเที่ยวทางประวัติศาสตร์ และวัฒนธรรม","subcategory":"วิถีชีวิตความเป็นอยู่ (ชุมชน)","activityCategory":"นันทนาการ และการท่องเที่ยว","description":"ตลาดโอ๊ะป่อย หมู่บ้านท่องเที่ยวนวัตวิถีบ้านท่ามะขาม ตั้งอยู่ตรงข้ามกับวัดป่าท่ามะขาม อ.","address":"","latitude":13.5195236,"longitude":99.315422},{"name":"พระธาตุเจดีย์แดนสยาม (เขาหัวช้าง)","category":"แหล่งท่องเที่ยวทางประวัติศาสตร์ และวัฒนธรรม","subcategory":"ศาสนสถาน (วัด/โบสถ์/มัสยิด ฯลฯ)","activityCategory":"","description":"พระธาตุเจดีย์แดนสยาม เขาหัวช้าง วัดบางหญ้าแพรก 2 เป็นวัดที่ตั้งอยู่บริเวณชายแดนไทย และบร","address":"590 หมู่ 8","latitude":13.6664771,"longitude":99.1759034},{"name":"บ้านหอมเทียน","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ห้างสรรพสินค้า/แหล่งช้อปปิ้ง/ตลาดสด/ตลาดนัด/ถนนคนเดิน","activityCategory":"","description":"บ้านหอมเทียน ถือเป็นผู้ริเริ่มผลิตเทียนหอมที่มีลวดลายในตัว พร้อมทั้งได้จัดจำหน่ายไปยัง","address":"210 หมู่ 2 บ้านทุ่งแฝก","latitude":13.544603,"longitude":99.314259},{"name":"เดอะแบ็คยาร์ด สวนผึ้ง","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ศูนย์กีฬา/สนามกีฬาสถานที่ทางการกีฬาทางบก/ทางน้ำ/ทางอากาศ","activityCategory":"","description":"กิจกรรมผจญภัย ด้วยประสบการณ์กว่า 16 ปี ให้คำปรึกษา และออกแบบโปรแกรมทีมให้กับทุกองค์กร","address":"หมู่ 2","latitude":13.5163552,"longitude":99.3045743},{"name":"นิวแลนด์","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ธีมปาร์ค (Theme Park)","activityCategory":"","description":"ดินแดนแห่งความสนุกใจกลางสวนผึ้ง สถานที่รวมกิจกรรมหลากหลายสำหรับนักท่องเที่ยว ไม่ว่าจะเ","address":"214 หมู่ 2","latitude":13.54321,"longitude":99.30548},{"name":"น้ำตกบ่อหวี","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"น้ำตก","activityCategory":"","description":"ในปัจจุบัน ปิดให้บริการ","address":"หมู่ 4 บ้านบ่อหวี","latitude":13.4774525,"longitude":99.2441437},{"name":"ทัศนา คายัค","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"แม่น้ำ/ลำคลอง/แก่ง","activityCategory":"","description":"ทัศนาคายัค ราชบุรีเป็นสถานที่ ที่สนุกตื่นเต้นกับกิจกรรมแอดเวนเจอร์สุดเร้าใจ การล่องแก่","address":"158/3 หมู่ 3 บ้านตะเคียนทอง","latitude":13.4441517,"longitude":99.2817337},{"name":"เวเนโต้สวนผึ้ง","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ห้างสรรพสินค้า/แหล่งช้อปปิ้ง/ตลาดสด/ตลาดนัด/ถนนคนเดิน","activityCategory":"","description":"เวเนโต้ สวนผึ้ง (Veneto SuanPhueng) เป็นแลนมาร์คแห่งการพักผ่อน ที่ผสมผสานธรรมชาติ ท่ามกลางขุนเขาและท","address":"231 หมู่ 2","latitude":13.5465359,"longitude":99.2915267},{"name":"สวนวังน้ำใส","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ไร่/สวนเกษตร (ฟาร์มสัตว์/ประมง)","activityCategory":"","description":"สวนวังน้ำใส ไร่สตรอวเบอรี่แห่งแรกในสวนผึ้ง เน้นวิธีการปลูกแบบปลอดสารพิษ นักท่องเที่ยวส","address":"","latitude":13.5439066,"longitude":99.3070465},{"name":"สวนผึ้ง ออร์คิด","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ไร่/สวนเกษตร (ฟาร์มสัตว์/ประมง)","activityCategory":"","description":"สวนผึ้ง ออร์คิด สถานที่ท่องเที่ยวที่สามารถเข้าชมดอกกล้วยไม้ ในโรงปลูกแบบใกล้ชิด กล้วยไม","address":"313 หมู่ 3","latitude":13.6170999,"longitude":99.2270022},{"name":"ศูนย์ปฏิบัติธรรมวัดช่องลม 2 สวนผึ้ง","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"สถานปฏิบัติธรรม","activityCategory":"","description":"ศูนย์ปฏิบัติธรรมวัดช่องลม โดยเจ้าคุณพระครูสาครมุนี เจ้าอาวาสวัดวิสุทธิวราราม (วัดช่องลม","address":"","latitude":13.5666461,"longitude":99.2624589},{"name":"วัดหนองหมี","category":"แหล่งท่องเที่ยวทางประวัติศาสตร์ และวัฒนธรรม","subcategory":"ศาสนสถาน (วัด/โบสถ์/มัสยิด ฯลฯ)","activityCategory":"","description":"วัดหนองหมี ตั้งอยู่ที่หมู่4 ต.ท่าเคย อ.สวนผึ้ง จ.ราชบุรี เคยเป็นสำนักสงฆืเมื่อปี พ.ศ. 2514 ก่อนท","address":"5 หมู่ 4","latitude":13.5463614,"longitude":99.3972991},{"name":"ไร่องุ่นภูผา (ปัญญาสวรรค์)","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ไร่/สวนเกษตร (ฟาร์มสัตว์/ประมง)","activityCategory":"","description":"ไร่องุ่นภูผา (ปัญญาสวรรค์) เป็นสถานที่ท่องเที่ยวเชิงเกษตร นอกจากนี้ ทางไร่ยังได้มีบริการ","address":"478 หมู่ 3","latitude":13.6182527,"longitude":99.2190447},{"name":"ฟาร์มตัวอย่างตามแนวพระราชดำริ บ้านบ่อหวี","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"โครงการหลวง/โครงการพระราชดำริ","activityCategory":"","description":"สืบเนื่องจากที่สมเด็จพระนางเจ้าฯ พระบรมราชินีนาถ เกรงว่าต่อไปหากอาหารมีราคาแพง ประชาชน","address":"หมู่ 4 บ้านบ่อหวี","latitude":13.5435922,"longitude":99.3386573},{"name":"เดอะซีนเนอรี่วินเทจฟาร์ม","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"ไร่/สวนเกษตร (ฟาร์มสัตว์/ประมง)","activityCategory":"","description":"เดอะซีนเนอรี่ วินเทจ ฟาร์ม สวนผึ้ง (The Scenery Vintage Farm) สถานที่ยอดฮิตโด่งดังในสวนผึ้งที่ต้องแวะถ่าย","address":"234 หมู่ 7","latitude":13.5101495,"longitude":99.2898082},{"name":"อัลปาก้าฮิลล์","category":"แหล่งท่องเที่ยวสำหรับกิจกรรมพิเศษ นันทนาการ และความสนใจพิเศษ","subcategory":"สวนสัตว์/ศูนย์ฝึกสัตว์/พิพิธภัณฑ์สัตว์","activityCategory":"","description":"อัลปาก้าฮิลล์เป็นฟาร์มเพาะพันธุ์อัลปาก้าแห่งแรกและแห่งเดียวของไทย อัลปาก้าของเราใช้ชี","address":"357 หมู่ 8","latitude":13.7095855,"longitude":99.203668},{"name":"ห้วยคอกหมู","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"จุดชมวิว","activityCategory":"","description":"จุดชมวิว ห้วยคอกหมู อำเภอสวนผึ้ง จังหวัดราชบุรี ขุนเขาตะวันตกสุดแดนประเทศไทย มีความสูงปร","address":"หมู่ 4 บ้านห้วยคอกหมู","latitude":13.45867481,"longitude":99.25985043},{"name":"อุทยานธรรมชาติวิทยา ตามพระราชดำริสมเด็จพระเทพรัตนราชสุดาฯ สยามบรมราชกุมารี","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"ศูนย์ศึกษาธรรมชาติ/พิพิธภัณธ์ธรรมชาติ (พืชพันธุ์)","activityCategory":"","description":"บริเวณเทือกเขาตะนาวศรี มีพื้นที่ 132,905 ไร่ ครอบคลุมพื้นที่ในเขตตำบลสวนผึ้งและตำบลตะนาวศรี","address":"254 หมู่ 7 บ้านห้วยผาก","latitude":13.5214459,"longitude":99.2456294},{"name":"สวนป่าสมเด็จพระนางเจ้าสิริกิติ์","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"ศูนย์ศึกษาธรรมชาติ/พิพิธภัณธ์ธรรมชาติ (พืชพันธุ์)","activityCategory":"","description":"มีเนื้อที่ประมาณ 3,000 ไร่ จัดสร้างขึ้นเพื่อเฉลิมพระเกียรติสมเด็จพระนางเจ้าสิริกิติ์ พระบร","address":"บ้านห้วยม่วง","latitude":13.40187445,"longitude":99.26774874},{"name":"น้ำตกเก้าชั้น","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"น้ำตก","activityCategory":"","description":"\"น้ำตกเก้าชั้น\" หรือ \"น้ำตกเก้าโจน\" เป็นน้ำตกขนาดกลาง มีความสูง 9 ชั้น สามารถเดินเท้าข","address":"หมู่ 7 บ้านห้วยผาก","latitude":13.525645,"longitude":99.239756},{"name":"เขากระโจม","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"ภูเขา/ธรณีสัณฐานเฉพาะ","activityCategory":"","description":"เขากระโจม เป็นยอดเขาสูงสุดในเทือกเขาตะนาวศรี (ความสูง 1,045 เมตรจากระดับน้ำทะเล) อยู่ห่างจาก","address":"350 หมู่ 3 บ้านผาปก","latitude":13.5812748,"longitude":99.1795936},{"name":"ธารน้ำร้อนบ่อคลึง","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"น้ำพุร้อน/บ่อน้ำร้อน/ธารน้ำ","activityCategory":"","description":"ธารน้ำร้อนเล็กๆ จากธรรมชาติ ที่ถือกำเนิดจากน้ำแร่ไหลซึมมาจากน้ำใต้ดินผ่านซอกหินจากเทือ","address":"27 หมู่7 บ้านห้วยผาก","latitude":13.5192574,"longitude":99.2456602},{"name":"โป่งยุบ","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"ภูเขา/ธรณีสัณฐานเฉพาะ","activityCategory":"","description":"**ททท.เพชรบุรี แจ้งว่าสถานที่ไม่พร้อมด้านการจัดการ** เป็นสถานที่ท่องเที่ยวทางธรรมชาติที่ม","address":"99 หมู่ 6 บ้านท่าเคย","latitude":13.5126139,"longitude":99.3562744},{"name":"แก่งส้มแมว","category":"แหล่งท่องเที่ยวทางธรรมชาติ","subcategory":"แม่น้ำ/ลำคลอง/แก่ง","activityCategory":"","description":"ตั้งอยู่เชิงเขาตะนาวศรี ตำบลตะนาวศรี ริมถนนสายสวนผึ้ง-บ้านห้วยม่วง อยู่ห่างจากที่ว่าการ","address":"","latitude":13.4079876,"longitude":99.2806739}];
+const statusEl=document.getElementById('status');
+const types={
+ nature:{file:'01_nature.png',label:'ธรรมชาติ / ป่าไม้'},
+ adventure:{file:'02_adventure.png',label:'ผจญภัย / กิจกรรม'},
+ culture:{file:'03_culture.png',label:'วัด / วัฒนธรรม'},
+ accommodation:{file:'04_accommodation.png',label:'ที่พัก / รีสอร์ต'},
+ market:{file:'05_market.png',label:'ตลาด / สินค้าท้องถิ่น'},
+ community:{file:'06_community.png',label:'ชุมชน / วิถีชีวิต'}
+};
+function classify(r){
+ const s=[r.category,r.subcategory,r.activityCategory,r.name,r.description].filter(Boolean).join(' ').toLowerCase();
+ if(/ที่พัก|รีสอร์ท|โรงแรม|โฮมสเตย์|accommodation|resort|hotel|homestay/.test(s))return 'accommodation';
+ if(/ตลาด|ของฝาก|สินค้า.?ท้องถิ่น|ตลาดนัด|market|souvenir/.test(s))return 'market';
+ if(/ชุมชน|หมู่บ้าน|วิถีชีวิต|otop|community|village|local life/.test(s))return 'community';
+ if(/วัด|โบราณ|ประวัติศาสตร์|วัฒนธรรม|ศาสนา|temple|culture|heritage|historical/.test(s))return 'culture';
+ if(/ผจญภัย|กิจกรรม|เดินป่า|ปีน|ขี่ม้า|ล่องแก่ง|adventure|activity|trek|hiking|rafting/.test(s))return 'adventure';
+ return 'nature';
+}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function start(){
+ if(typeof L==='undefined'){
+   statusEl.textContent='ไม่สามารถโหลด Leaflet จาก CDN ได้ กรุณาตรวจการเชื่อมต่ออินเทอร์เน็ตหรือ CDN';
+   return;
+ }
+ const map=L.map('map',{scrollWheelZoom:true}).setView([13.55,99.32],11);
+ // Leaflet needs raster tiles. OpenFreeMap's /styles/liberty endpoint is a vector style,
+ // not a PNG raster tile URL; use a raster basemap provider here.
+ const carto=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+   subdomains:'abcd',maxZoom:20,attribution:'© OpenStreetMap contributors © CARTO'
+ });
+ let fallbackUsed=false, tileErrors=0;
+ carto.on('tileerror',()=>{
+   tileErrors++;
+   if(tileErrors>=3 && !fallbackUsed){
+     fallbackUsed=true;
+     map.removeLayer(carto);
+     L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{
+       subdomains:'abc',maxZoom:19,attribution:'© OpenStreetMap contributors, HOT'
+     }).addTo(map);
+     statusEl.textContent='กำลังใช้แผนที่สำรอง เนื่องจากแหล่งแผนที่หลักไม่ตอบสนอง…';
+   }
+ });
+ carto.addTo(map);
+ const bounds=[],counts={nature:0,adventure:0,culture:0,accommodation:0,market:0,community:0};
+ let shown=0, skipped=0;
+ PLACES.forEach((r,i)=>{
+   const lat=Number(r.latitude),lng=Number(r.longitude);
+   if(!r.name || !Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180){skipped++;return;}
+   const key=classify(r);counts[key]++;
+   const html='<img src="'+types[key].file+'" alt="'+esc(types[key].label)+'">';
+   const icon=L.divIcon({className:'mascot-marker',html,iconSize:[54,62],iconAnchor:[27,60],popupAnchor:[0,-56]});
+   const marker=L.marker([lat,lng],{icon}).addTo(map);
+   marker.bindPopup('<b>'+(i+1)+'. '+esc(r.name)+'</b><br>'+esc(types[key].label)+
+     (r.category?'<br>หมวดข้อมูล: '+esc(r.category):'')+
+     (r.subcategory?'<br>หมวดย่อย: '+esc(r.subcategory):'')+
+     (r.address?'<br>'+esc(r.address):'')+
+     '<br><small>พิกัด: '+lat.toFixed(6)+', '+lng.toFixed(6)+'</small>');
+   bounds.push([lat,lng]);shown++;
+ });
+ if(bounds.length) map.fitBounds(bounds,{padding:[35,35],maxZoom:13});
+ setTimeout(()=>map.invalidateSize(true),300);
+ statusEl.textContent='โหลดข้อมูลอัตโนมัติสำเร็จ: '+PLACES.length+' รายการ'+
+   '\\nแสดงตำแหน่ง: '+shown+' จุด'+(skipped?'\\nข้ามข้อมูลที่พิกัดไม่ถูกต้อง: '+skipped+' จุด':'')+
+   '\\nธรรมชาติ '+counts.nature+' | ผจญภัย '+counts.adventure+' | วัฒนธรรม '+counts.culture+
+   '\\nที่พัก '+counts.accommodation+' | ตลาด '+counts.market+' | ชุมชน '+counts.community+
+   '\\n\\nหมายเหตุ: ตรวจสอบพิกัดและการจัดประเภทก่อนเผยแพร่';
+}
+try{start();}catch(e){statusEl.textContent='เกิดข้อผิดพลาดในการเริ่มแผนที่: '+e.message;}
+</script>
+</body></html>
