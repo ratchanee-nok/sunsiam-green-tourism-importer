@@ -120,7 +120,7 @@ const categoryStyles={
 function markerIcon(kind,zoom){
  const spec=categoryStyles[kind]||categoryStyles.nature;
  if(zoom>=14){
-   return L.divIcon({className:'category-marker v7-full',html:'<img src="assets/mascot_'+spec.asset+'.png" alt="'+spec.label+' mascot">',iconSize:[72,82],iconAnchor:[36,76],popupAnchor:[0,-72]});
+   return L.divIcon({className:'category-marker v7-full',html:'<img src="'+({nature:"01_nature.png",adventure:"02_adventure.png",culture:"03_culture.png",accommodation:"04_accommodation.png",market:"05_market.png",community:"06_community.png"}[kind]||"01_nature.png")+'" alt="'+spec.label+' mascot">',iconSize:[72,82],iconAnchor:[36,76],popupAnchor:[0,-72]});
  }
  return L.divIcon({className:'category-marker',html:'<div class="v7-symbol '+kind+'"><span>'+spec.emoji+'</span></div>',iconSize:[40,42],iconAnchor:[20,36],popupAnchor:[0,-34]});
 }
